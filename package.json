@@ -1,0 +1,31 @@
+{
+  "name": "linkup-api",
+  "version": "1.0.0",
+  "description": "This is the API for the linkUp application.",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest --WatchAll",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "author": "PaulSanga",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "mssql": "^9.3.0",
+    "nodemailer": "^6.9.4",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4",
+    "nodemon": "^3.0.1",
+    "swagger-ui-express": "^5.0.0"
+  }
+}
