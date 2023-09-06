@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
 const { sqlConfig } = require('../config/database.connection.config')
-const { registrationSchema, loginSchema, overWriteOTP } = require('../utils/validators')
+const { registrationSchema, loginSchema, overWriteOTP, forgotPasswordSchema } = require('../utils/validators')
 
 module.exports.register = async(req, res)=>{
     try {
@@ -146,6 +146,68 @@ module.exports.login = async(req, res)=>{
         const {password, ...user} = checkEmailQuery.recordset[0]
 
         return res.status(200).json({message: 'login successful', token, user})
+
+    } catch (error) {
+        return res.status(500).json({error: 'Internal server error'})
+    }
+}
+
+
+module.exports.forgotPassword = async(req, res)=>{
+    try {
+
+        if(!req.body){
+            return res.status(400).json({error: 'Request body can not be empty'})
+        }
+
+        const {email} = req.body
+        const {error} = forgotPasswordSchema.validate({email})
+        if(error){
+            return res.status(422).json({error: error.message})
+        }
+
+        const pool = await mssql.connect(sqlConfig)
+        const checkEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkEmailQuery.recordset.length <= 0){
+            return res.status(409).json({error: 'This email is not registered'})
+        }
+
+        const resetPasswordToken = crypto.randomBytes(8).toString('hex')
+
+        
+
+        const trasporter = nodemailer.createTransport({
+            service: 'gmail',
+            port: process.env.EMAIL_PORT,
+            auth: {
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PWD
+            }
+        })
+    
+        const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Link Up Reset Your Password',
+            text: `Please use the token below to reset your password\nThe reset password token is: ${resetPasswordToken}`
+        }
+    
+        trasporter.sendMail(mailOptions, async(error, info)=>{
+            if(error){
+                return res.status(500).json({error: `${error.message}`})
+            }else{
+                await pool
+                .request()
+                .input('email', email)
+                .input('reset_password_token', resetPasswordToken)
+                .execute('forgotPasswordProc')
+                return res.status(200).json({message: 'Reset password token sent. Please check your email inbox'})
+            }
+        })
 
     } catch (error) {
         return res.status(500).json({error: 'Internal server error'})

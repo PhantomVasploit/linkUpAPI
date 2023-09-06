@@ -11,7 +11,8 @@ CREATE TABLE userTable(
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(MAX) NOT NULL,
     avatar VARCHAR(MAX) NOT NULL,
-    is_deleted BIT DEFAULT 0,
-    is_verified BIT DEFAULT 0
+    password_reset_token VARCHAR(255),
+    is_deleted BIT DEFAULT 0 NOT NULL,
+    is_verified BIT DEFAULT 0 NOT NULL
 );
 GO

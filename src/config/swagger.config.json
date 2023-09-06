@@ -130,6 +130,43 @@
                     }
                 }
             }
+        },
+
+        "/forgot-password":{
+            "post": {
+                "tags": ["User"],
+                "summary": "Sends user a reset password token",
+                "description": "Expects user email, the one he created the account with, and sends a reset password token to that email address.",
+                "operationId": "userForgotPassword",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User's email address",
+                        "required": true,
+                        "schema": {"$ref":"#/definitions/UserEmail"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reset token sent to user's email address"
+                    },
+                    "400": {
+                        "description": "Empty or no request body was provided"
+                    },
+                    "409": {
+                        "description": "Invalid email address"
+                    },
+                    "422": {
+                        "description": "Validation on user email input failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
 
     },
@@ -197,6 +234,18 @@
                     "type": "string",
                     "description": "User's password",
                     "example": "pajoy9903"
+                }
+            }
+        },
+
+        "UserEmail": {
+            "type": "object",
+            "required": ["email"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "User's email address",
+                    "example": "paul.nyamawi99@gmail.com"
                 }
             }
         }
