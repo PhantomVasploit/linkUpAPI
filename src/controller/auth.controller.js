@@ -88,7 +88,7 @@ module.exports.verifyUserRegistration = async (req, res)=>{
         .input('email', email)
         .execute('findUserByEmailProc')
 
-        if(checkEmailQuery.recordset.length < 0){
+        if(checkEmailQuery.recordset.length <= 0){
             return res.status(409).json({error: 'This email is not registred'})
         }
 

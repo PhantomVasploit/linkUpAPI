@@ -3,8 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
-const { register } = require('../../src/controller/auth.controller')
-const { registrationSchema } = require('../../src/utils/validators')
+const { register, verifyUserRegistration } = require('../../src/controller/auth.controller')
+const { registrationSchema, overWriteOTP } = require('../../src/utils/validators')
 
 
 describe('User registration test suites', ()=>{
@@ -195,6 +195,81 @@ describe('User registration test suites', ()=>{
         await register(request, response)
         expect(response.status).toHaveBeenCalledWith(500)
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+    })
+
+})
+
+
+describe('Verify user registration test suites', ()=>{
+
+    it('should return a status code of 400 when the request body is missing or empty', async()=>{
+
+        const request = {}
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await verifyUserRegistration(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'Request body can not be empty'})
+    })
+
+    it('should return a status code of 422 when user input validation fails', async()=>{
+        
+        const verifyUserRegistartionValidation = jest.spyOn(overWriteOTP, 'validate')
+        verifyUserRegistartionValidation.mockReturnValue({error: new Error('Invalid input')})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'recievedOTP',
+                newPassword: 'Test@1345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await verifyUserRegistration(request, response)
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(response.json).toHaveBeenCalledWith({error: 'Invalid input'})
+
+    })
+
+    it('should return a status code of 409 if email is not registered on our database', async()=>{
+
+        const mockRecordSet = []
+
+        const verifyUserRegistartionValidation = jest.spyOn(overWriteOTP, 'validate')
+        verifyUserRegistartionValidation.mockReturnValue({error: null})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'recievedOTP',
+                newPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await verifyUserRegistration(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'This email is not registred'})
+
     })
 
 })
