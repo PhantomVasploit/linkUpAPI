@@ -148,7 +148,6 @@ module.exports.login = async(req, res)=>{
         return res.status(200).json({message: 'login successful', token, user})
 
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({error: 'Internal server error'})
     }
 }
