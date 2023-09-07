@@ -3,8 +3,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
-const { register, verifyUserRegistration, login, forgotPassword, validateResetPasswordToken, setNewPassword } = require('../../src/controller/auth.controller')
+const { register, verifyUserRegistration, login, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../../src/controller/auth.controller')
 const { registrationSchema, overWriteOTP, loginSchema, forgotPasswordSchema, validateResetPasswordTokenSchema } = require('../../src/utils/validators')
+const { request } = require('express')
 
 
 describe('User registration test suites', ()=>{
@@ -425,6 +426,7 @@ describe('User login test suites', ()=>{
 
     })
 
+
     it('should return a status code of 409 if user enters an unregistered email address', async()=>{
 
         const mockRecordSet = []
@@ -455,6 +457,44 @@ describe('User login test suites', ()=>{
         expect(response.json).toHaveBeenCalledWith({error: 'Invalid login credentials'})
     })
 
+    it('should return a status code of 403 when user account is deactivates', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '1'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const loginValidation = jest.spyOn(loginSchema, 'validate')
+        loginValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await login(request, response)
+        expect(response.status).toHaveBeenCalledWith(403)
+        expect(response.json).toHaveBeenCalledWith({error: 'User account is deactivated'})
+    })
 
     it('should return a status code of 401 when user provides an invalid password', async()=>{
 
@@ -1075,4 +1115,402 @@ describe('Set New Password Test Suites', ()=>{
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
 
     })
+})
+
+
+describe('Deactivate Account Test Suites', ()=>{
+
+    it('should return a status code of 400 when the request body is missing or empty', async()=>{
+
+        const request = {}
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'Request body can not be empty'})
+    })
+
+    it('should return a status code of 422 if user input validation fails', async()=>{
+
+        const request = {
+            body: {
+                email: 'phantom.labs.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const deactivateAccountValidation = jest.spyOn(loginSchema, 'validate')
+        deactivateAccountValidation.mockReturnValue({error: new Error("Invalid user input")})
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(response.json).toHaveBeenCalledWith({error: "Invalid user input"})
+    })
+
+    it('should retrun a status code of 409 when user email provided is not registered', async()=>{
+
+        const mockRecordSet = []
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const deactivateAccountValidation = jest.spyOn(loginSchema, 'validate')
+        deactivateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'This email is not registred'})
+    })
+
+    it('should return a status code of 403 when user tries to deactivate a deactivated account', async()=>{
+      
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '1'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const deactivateAccountValidation = jest.spyOn(loginSchema, 'validate')
+        deactivateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(403)
+        expect(response.json).toHaveBeenCalledWith({error: 'User account is already deactivated'})
+        
+    })
+
+    it('should return a status code of 409 if user password is invalid', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '0'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@67890.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const deactivateAccountValidation = jest.spyOn(loginSchema, 'validate')
+        deactivateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({ recordset: mockRecordSet })
+        })
+
+        jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(false)
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'Authentication failed'})
+    })
+
+    it('should return a status of 200 if user email and password is valid and account is active', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '0'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const deactivateAccountValidation = jest.spyOn(loginSchema, 'validate')
+        deactivateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(true)
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(200)
+        expect(response.json).toHaveBeenCalledWith({message: 'User account deactivated'})
+
+    })
+
+    it('should return a status code of 500 if an error occurs during the execution of the request', async()=>{
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const mockPool = {
+            request: jest.fn(()=>{
+                throw new Error('Error connecting to the database')
+            })
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(500)
+        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+
+    })
+
+})
+
+
+describe('Activate Account Suites', ()=>{
+
+    it('should return a status code of 400 if request body is empty or missing', async()=>{
+
+        const request = {}
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await activateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'Request body can not be empty'})
+
+    })
+
+    it('should return a status code of 422 when user input validation fails', async()=>{
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const activateAccountValidation = jest.spyOn(forgotPasswordSchema, 'validate')
+        activateAccountValidation.mockReturnValue({error: new Error("Invalid input")})
+
+        await activateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(response.json).toHaveBeenCalledWith({error: 'Invalid input'})
+
+    })
+
+    it('should return a status code of 409 id user email is not registered', async()=>{
+
+        const mockRecordSet = []
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const activateAccountValidation = jest.spyOn(forgotPasswordSchema, 'validate')
+        activateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await activateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'This email is not registered'})
+
+    })
+
+    it('should retrun a status code of 400 if user account is already active', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '0'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const activateAccountValidation = jest.spyOn(forgotPasswordSchema, 'validate')
+        activateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({ recordset: mockRecordSet })
+        })
+
+        await activateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'User account is active'})
+    })
+
+    it('should return a status code of 200 when user email is valid and user account is deactivated', async()=>{
+       
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password',
+                is_deleted: '1'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const activateAccountValidation = jest.spyOn(forgotPasswordSchema, 'validate')
+        activateAccountValidation.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({ recordset: mockRecordSet })
+        })
+
+        await activateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(200)
+        expect(response.json).toHaveBeenCalledWith({message: 'User account activated successfully'})
+    })
+
+    it('should return a status code of 500 if an error occurs during request execution', async()=>{
+        
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const mockPool = {
+            request: jest.fn(()=>{
+                throw new Error('Error connecting to the database')
+            })
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
+
+        await deactivateAccount(request, response)
+        expect(response.status).toHaveBeenCalledWith(500)
+        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+    
+        
+    })
+
 })

@@ -241,6 +241,80 @@
                     }
                 }
             }
+        },
+
+        "/deactivate-account": {
+            "post": {
+                "tags": ["User Authentication"],
+                "summary": "Deactivates user's account",
+                "description": "It deactivate user's account, users can not login",
+                "operationId": "deactivateUserAccount",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User's email address and password",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/DeactivateUserAccount"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User account deactivated"
+                    },
+                    "400": {
+                        "description": "Empty or no request body was provided"
+                    },
+                    "409": {
+                        "description": "Invalid email address or authentication failure"
+                    },
+                    "422": {
+                        "description": "Validation on user inputs failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/activate-account": {
+            "post": {
+                "tags": ["User Authentication"],
+                "summary": "Activates User's account",
+                "description": "It activate user account, users can login",
+                "operationId": "activateUserAccount",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User's email address",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/UserEmail"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User account activated"
+                    },
+                    "400": {
+                        "description": "Empty or no request body was provided"
+                    },
+                    "409": {
+                        "description": "Invalid email address"
+                    },
+                    "422": {
+                        "description": "Validation on user inputs failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
 
     },
@@ -342,6 +416,23 @@
         },
 
         "SetNewPassword": {
+            "type": "object",
+            "required": ["email", "userPassword"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "User's email address",
+                    "example": "paul.nyamawi99@gmail.com"
+                },
+                "userPassword": {
+                    "type": "string",
+                    "description": "User's password",
+                    "example": "Test@12345."
+                }
+            }
+        },
+
+        "DeactivateUserAccount": {
             "type": "object",
             "required": ["email", "userPassword"],
             "properties": {

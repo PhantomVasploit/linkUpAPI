@@ -134,6 +134,10 @@ module.exports.login = async(req, res)=>{
             return res.status(409).json({error: 'Invalid login credentials'})
         }
 
+        if(checkEmailQuery.recordset[0].is_deleted == 1){
+            return res.status(403).json({error: 'User account is deactivated'})
+        }
+
         const valid = await bcrypt.compare(userPassword, checkEmailQuery.recordset[0].password)
         if(!valid){
             return res.status(401).json({error: 'Invalid login credentials'})
@@ -284,7 +288,91 @@ module.exports.setNewPassword = async(req, res)=>{
         return res.status(200).json({message: 'Password reset successfull'})
 
     } catch (error) {
-        console.log(error.message);
+        return res.status(500).json({error: 'Internal server error'})
+    }
+}
+
+module.exports.deactivateAccount = async(req, res)=>{
+    try {
+        
+        if(!req.body){
+            return res.status(400).json({error: 'Request body can not be empty'})
+        }
+
+        const {email, userPassword} = req.body
+        const {error} = loginSchema.validate({email, userPassword})
+        if(error){
+            return res.status(422).json({error: error.message})
+        }
+
+        const pool = await mssql.connect(sqlConfig)
+        const checkEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkEmailQuery.recordset.length <= 0){
+            return res.status(409).json({error: 'This email is not registred'})
+        }
+
+        if(checkEmailQuery.recordset[0].is_deleted == 1){
+            return res.status(403).json({error: "User account is already deactivated"})
+        }
+
+        const valid = await bcrypt.compare(userPassword, checkEmailQuery.recordset[0].password)
+        if(!valid){
+            return res.status(409).json({error: 'Authentication failed'})
+        }
+
+        await pool
+        .request()
+        .input('email', email)
+        .execute('deactivateUserProc')
+
+        return res.status(200).json({message: 'User account deactivated'})
+
+    } catch (error) {
+        return res.status(500).json({error: "Internal server error"})
+    }
+}
+
+
+module.exports.activateAccount = async(req, res)=>{
+    try {
+        
+        if(!req.body){
+            return res.status(400).json({error: 'Request body can not be empty'})
+        }
+
+        const {email} = req.body
+        const {error} = forgotPasswordSchema.validate({email})
+        if(error){
+            return res.status(422).json({error: error.message})
+        }
+
+        const pool = await mssql.connect(sqlConfig)
+        const checkEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkEmailQuery.recordset.length <= 0){
+            return res.status(409).json({error: 'This email is not registered'})
+        }
+
+        if(checkEmailQuery.recordset[0].is_deleted == 0){
+            return res.status(400).json({error: 'User account is active'})
+        }
+
+        await pool
+        .request()
+        .input('email', email)
+        .execute('restoreUserProc')
+
+        return res.status(200).json({message: 'User account activated successfully'})
+
+
+    } catch (error) {
         return res.status(500).json({error: 'Internal server error'})
     }
 }
