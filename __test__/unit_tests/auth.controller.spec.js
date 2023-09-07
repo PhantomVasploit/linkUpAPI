@@ -3,8 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
-const { register, verifyUserRegistration, login, forgotPassword } = require('../../src/controller/auth.controller')
-const { registrationSchema, overWriteOTP, loginSchema, forgotPasswordSchema } = require('../../src/utils/validators')
+const { register, verifyUserRegistration, login, forgotPassword, validateResetPasswordToken, setNewPassword } = require('../../src/controller/auth.controller')
+const { registrationSchema, overWriteOTP, loginSchema, forgotPasswordSchema, validateResetPasswordTokenSchema } = require('../../src/utils/validators')
 
 
 describe('User registration test suites', ()=>{
@@ -759,4 +759,320 @@ describe('Forgot password test suites', ()=>{
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
     })
 
+})
+
+describe('Validate Reset Password Token Test Suites', ()=>{
+
+    it('should return a status code of 400 when request body is missing or empty', async()=>{
+
+        const request = {}
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'Request body must be provided'})
+    })
+
+    it('should return a status code of 422 when user input validation fails', async()=>{
+
+        const validateResetPasswordTokenSchemaMock = jest.spyOn(validateResetPasswordTokenSchema, 'validate')
+        validateResetPasswordTokenSchemaMock.mockReturnValue({error: new Error("Validation failed")})
+
+        const request = {
+            body: {
+                email: 'phantom.labs.com',
+                resetPasswordToken: 'hykgggysbjfho'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(response.json).toHaveBeenCalledWith({error: 'Validation failed'})
+
+    })
+
+    it('should return a status code of 409 if email is not registered', async()=>{
+
+        const mockRecordSet = []
+
+        const validateResetPasswordTokenSchemaMock = jest.spyOn(validateResetPasswordTokenSchema, 'validate')
+        validateResetPasswordTokenSchemaMock.mockReturnValue({error: null})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                resetPasswordToken: 'hdtndgfhj'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'This email is unregistered'})
+    })
+
+    it('should return a status code of 409 when the reset password token provided is invlaid', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password_reset_token: 'validtoken'   
+            }
+        ]
+
+        const validateResetPasswordTokenSchemaMock = jest.spyOn(validateResetPasswordTokenSchema, 'validate')
+        validateResetPasswordTokenSchemaMock.mockReturnValue({error: null})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                resetPasswordToken: 'invalidToken'   
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'Invalid reset password token'})
+
+    })
+
+    it('should return a status code of 200 when the reset password token is valid', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password_reset_token: 'validToken'
+            }
+        ]
+
+        const validateResetPasswordTokenSchemaMock = jest.spyOn(validateResetPasswordTokenSchema, 'validate')
+        validateResetPasswordTokenSchemaMock.mockReturnValue({error: null})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                resetPasswordToken: 'validToken'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(200)
+        expect(response.json).toHaveBeenCalledWith({message: 'Proceed to set new password'})
+
+    })
+
+    it('should return a status code of 500 when an error occurs during request execution', async()=>{
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                resetPasswordToken: 'validToken'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const mockPool = {
+            request: jest.fn(()=>{
+                throw new Error("Error connecting to the database")
+            })
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
+
+        await validateResetPasswordToken(request, response)
+        expect(response.status).toHaveBeenCalledWith(500)
+        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+
+    })
+
+})
+
+describe('Set New Password Test Suites', ()=>{
+
+    it('should return a status code of 400 when request body is empty or missing', async()=>{
+
+        const request = {}
+        
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await setNewPassword(request, response)
+        expect(response.status).toHaveBeenCalledWith(400)
+        expect(response.json).toHaveBeenCalledWith({error: 'Request body can not be empty'})
+
+    })
+
+    it('should return a status code of 422 if user validation fails', async()=>{
+
+        const setNewPasswordValidationMock = jest.spyOn(loginSchema, 'validate')
+        setNewPasswordValidationMock.mockReturnValue({error: new Error('Invalid user input')})
+
+        const request = {
+            body: {
+                email: 'phantom.labs.com',
+                password: 'labs@1337x'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        await setNewPassword(request, response)
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(response.json).toHaveBeenCalledWith({error: 'Invalid user input'})
+    })
+
+    it('should return a status code of 409 if user email is not registered', async()=>{
+
+        const mockRecordSet = []
+
+        const setNewPasswordValidationMock = jest.spyOn(loginSchema, 'validate')
+        setNewPasswordValidationMock.mockReturnValue({error: null})
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'labs@1337x'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await setNewPassword(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'This email is unregistered'})
+    })
+
+    it('should return a status code of 200 when user email is registered and input is valid', async()=>{
+
+        const mockRecordSet = [
+            {
+                firstName: "Paul",
+                lastName: "Sanga",
+                email: "paul.nyamawi99@gmail.com",
+                profilePicture: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg",
+                password: 'hashed@Password'
+            }
+        ]
+
+        const request = {
+            body: {
+                email: 'paul.nyamawi99@gmail.com',
+                userPassword: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const setNewPasswordValidationMock = jest.spyOn(loginSchema, 'validate')
+        setNewPasswordValidationMock.mockReturnValue({error: null})
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        jest.spyOn(bcrypt, 'genSalt').mockResolvedValueOnce()
+        jest.spyOn(bcrypt, 'hash').mockResolvedValueOnce()
+
+        await setNewPassword(request, response)
+        expect(response.status).toHaveBeenCalledWith(200)
+        expect(response.json).toHaveBeenCalledWith({message: 'Password reset successfull'})
+    })
+
+    it('should return a status code of 500 if an error occur during request execution', async()=>{
+
+        const request = {
+            body: {
+                email: 'pau.nyamawi99@gmail.com',
+                password: 'Test@12345.'
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const mockPool = {
+            request: jest.fn(()=>{
+                throw new Error("Unable to connect to the database server")
+            })
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
+        
+        await setNewPassword(request, response)
+        expect(response.status).toHaveBeenCalledWith(500)
+        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+
+    })
 })

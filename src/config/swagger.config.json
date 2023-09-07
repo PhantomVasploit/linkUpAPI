@@ -20,7 +20,7 @@
         
         "/register": {
             "post": {
-                "tags": ["User"],
+                "tags": ["User Authentication"],
                 "summary": "Create a new user",
                 "description": "Create a new user by providing user registration details.",
                 "operationId": "newUserAccount",
@@ -57,7 +57,7 @@
 
         "/verify-user":{
             "post": {
-                "tags": ["User"],
+                "tags": ["User Authentication"],
                 "summary": "Verify registered user",
                 "description": "Chenges user password from the OTP to a new password and set user's account to verified",
                 "operationId": "verifyUserAccount",
@@ -94,7 +94,7 @@
 
         "/login": {
             "post": {
-                "tags": ["User"],
+                "tags": ["User Authentication"],
                 "summary": "Authenticates user",
                 "description": "Authenticates user based off of the login credentials provided.",
                 "operationId": "userLogin",
@@ -134,7 +134,7 @@
 
         "/forgot-password":{
             "post": {
-                "tags": ["User"],
+                "tags": ["User Authentication"],
                 "summary": "Sends user a reset password token",
                 "description": "Expects user email, the one he created the account with, and sends a reset password token to that email address.",
                 "operationId": "userForgotPassword",
@@ -161,6 +161,80 @@
                     },
                     "422": {
                         "description": "Validation on user email input failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/validate-reset-password-token": {
+            "post": {
+                "tags": ["User Authentication"],
+                "summary": "Validates the reset password token sent to the user's email address",
+                "description": "Prompts user to provide the reset password token received and validates it.",
+                "operationId": "validateResetPasswordToken",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Reset password token validation schema",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/ResetPasswordRequestSchema"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation successful"
+                    },
+                    "400": {
+                        "description": "Empty or no request body was provided"
+                    },
+                    "409": {
+                        "description": "Invalid email address or reset password token"
+                    },
+                    "422": {
+                        "description": "Validation on user email and token input failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/set-new-password": {
+            "post": {
+                "tags": ["User Authentication"],
+                "summary": "Set a new password for the user",
+                "description": "Prompts user to set a new password for their account.",
+                "operationId": "SetNewPassword",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User email and new password",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/SetNewPassword"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset successful"
+                    },
+                    "400": {
+                        "description": "Empty or no request body was provided"
+                    },
+                    "409": {
+                        "description": "Invalid email address"
+                    },
+                    "422": {
+                        "description": "Validation on user inputs failed"
                     },
                     "500": {
                         "description": "Internal server error"
@@ -246,6 +320,40 @@
                     "type": "string",
                     "description": "User's email address",
                     "example": "paul.nyamawi99@gmail.com"
+                }
+            }
+        },
+
+        "ResetPasswordRequestSchema": {
+            "type": "object",
+            "required": ["email", "resetPasswordToken"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "User's email address",
+                    "example": "paul.nyamawi99@gmail.com"
+                },
+                "resetPasswordToken": {
+                    "type": "string",
+                    "description": "User's password",
+                    "example": "4457112d2c9673a1"
+                }
+            }
+        },
+
+        "SetNewPassword": {
+            "type": "object",
+            "required": ["email", "userPassword"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "User's email address",
+                    "example": "paul.nyamawi99@gmail.com"
+                },
+                "userPassword": {
+                    "type": "string",
+                    "description": "User's password",
+                    "example": "Test@12345."
                 }
             }
         }

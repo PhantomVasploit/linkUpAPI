@@ -98,3 +98,18 @@ module.exports.forgotPasswordSchema = Joi.object({
         'any.required': `email filed is required`
     })  
 })
+
+module.exports.validateResetPasswordTokenSchema = Joi.object({
+    email: Joi.string()
+    .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net']}})
+    .required()
+    .messages({
+        'string.email': `enter correct email format`,
+        'any.required': `email filed is required`
+    }),
+    resetPasswordToken: Joi.string()
+    .required()
+    .messages({
+        'any.required': `email filed is required`
+    })
+})

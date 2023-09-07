@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
 const { sqlConfig } = require('../config/database.connection.config')
-const { registrationSchema, loginSchema, overWriteOTP, forgotPasswordSchema } = require('../utils/validators')
+const { registrationSchema, loginSchema, overWriteOTP, forgotPasswordSchema, validateResetPasswordTokenSchema } = require('../utils/validators')
 
 module.exports.register = async(req, res)=>{
     try {
@@ -210,6 +210,81 @@ module.exports.forgotPassword = async(req, res)=>{
         })
 
     } catch (error) {
+        return res.status(500).json({error: 'Internal server error'})
+    }
+}
+
+module.exports.validateResetPasswordToken = async(req, res)=>{
+    try {
+
+        if(!req.body){
+            return res.status(400).json({error: 'Request body must be provided'})
+        }
+
+        const { email, resetPasswordToken } = req.body
+        const { error } = validateResetPasswordTokenSchema.validate({ email, resetPasswordToken})
+        if(error){
+            return res.status(422).json({error: error.message})
+        }
+
+        const pool = await mssql.connect(sqlConfig)
+        const checkEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkEmailQuery.recordset.length <= 0){
+            return res.status(409).json({error: 'This email is unregistered'})
+        }
+
+        if(resetPasswordToken == checkEmailQuery.recordset[0].password_reset_token){
+            return res.status(200).json({message: 'Proceed to set new password'})
+        }
+
+        return res.status(409).json({error: 'Invalid reset password token'})
+
+    } catch (error) {
+        return res.status(500).json({error: 'Internal server error'})
+    }
+}
+
+
+module.exports.setNewPassword = async(req, res)=>{
+    try {
+
+        if(!req.body){
+            return res.status(400).json({error: 'Request body can not be empty'})
+        }
+
+        const { email, userPassword } = req.body
+        const {error} = loginSchema.validate({email, userPassword})
+        if(error){
+            return res.status(422).json({error: error.message})
+        }
+
+        const pool = await mssql.connect(sqlConfig)
+        const checkEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkEmailQuery.recordset.length <= 0){
+            return res.status(409).json({error: 'This email is unregistered'})
+        }
+
+        const salt = await bcrypt.genSalt(10)
+        const hashedPwd = await bcrypt.hash(userPassword, salt)
+
+        await pool
+        .request()
+        .input('email', email)
+        .input('password', hashedPwd)
+        .execute('changePasswordProc')
+
+        return res.status(200).json({message: 'Password reset successfull'})
+
+    } catch (error) {
+        console.log(error.message);
         return res.status(500).json({error: 'Internal server error'})
     }
 }
