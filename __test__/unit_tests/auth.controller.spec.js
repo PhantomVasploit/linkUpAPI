@@ -1506,11 +1506,10 @@ describe('Activate Account Suites', ()=>{
 
         jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
 
-        await deactivateAccount(request, response)
+        await activateAccount(request, response)
         expect(response.status).toHaveBeenCalledWith(500)
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
-    
-        
+
     })
 
 })

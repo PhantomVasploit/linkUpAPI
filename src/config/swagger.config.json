@@ -315,7 +315,127 @@
                     }
                 }
             }
+        },
+
+        "/users": {
+            "get": {
+                "tags": ["User Management"],
+                "summary": "Fetch all users",
+                "description": "It will return an array of user account details",
+                "operationId": "fetchAllUsers",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/user/{id}": {
+            "get": {
+                "tags": ["User Management"],
+                "summary": "Fetch user by id",
+                "description": "It will return a single user account details",
+                "operationId": "FetchUserById",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "User's account id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "404": {
+                        "description": "User account not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+
+            "put": {
+                "tags": ["User Management"],
+                "summary": "Update user account details",
+                "description": "User provides new account details and the old data is overwitten",
+                "operationId": "updateUserAccount",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User's details to update",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/User"}
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update successful"
+                    },
+                    "400": {
+                        "description": "Missing or empty request body"
+                    },
+                    "404": {
+                        "description": "User account not found"
+                    },
+                    "422": {
+                        "description": "User input validation failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+
+            "delete": {
+                "tags": ["User Management"],
+                "summary": "Deletes user account",
+                "description": "It deletes user account if it exits",
+                "operationId": "deleteUserAccount",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "User account's id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deletion successful"
+                    },
+                    "404": {
+                        "description": "User account not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
+
+        
+
 
     },
     "definitions": {
