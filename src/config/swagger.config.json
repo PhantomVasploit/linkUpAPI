@@ -432,10 +432,124 @@
                     }
                 }
             }
+        },
+
+        "/posts": {
+            "get": {
+                "tags": ["Post Management"],
+                "summary": "Fetch all posts",
+                "description": "It will return a list of all posts ever created",
+                "operationId": "fetchAllPosts",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/post/{id}":{
+            "get": {
+                "tags": ["Post Management"],
+                "summary": "Fetch a single post",
+                "description": "It will return a post whose id matches the id on the request path",
+                "operationId": "fetchPostById",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "Post id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "404": {
+                        "description": "post not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Post Management"],
+                "summary": "Create a new post",
+                "description": "It will create a new post based on the request body",
+                "operationId": "createNewPost",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "Post owner id",
+                        "required": true
+                    }, 
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Post details to create",
+                        "required": true,
+                        "schema": {"$ref":"#/definitions/Post"}
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Post created successfully"
+                    },
+                    "422": {
+                        "description": "Post input validation failed"
+                    },
+                    "400":{
+                        "description": "Error creating post"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+
+            "delete":{
+                "tags": ["Post Management"],
+                "summary": "Delete an existing post",
+                "description": "It will delete an existing post",
+                "operationId": "deletePost",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in":"path",
+                        "name": "id",
+                        "description": "Post id",
+                        "required": true
+                    }
+                ],
+                "responses":{
+                    "200": {
+                        "description": "Post deleted successfully"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    },
+                    "409": {
+                        "description": "Post already deleted"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
-
-        
-
 
     },
     "definitions": {
@@ -565,6 +679,23 @@
                     "type": "string",
                     "description": "User's password",
                     "example": "Test@12345."
+                }
+            }
+        },
+
+        "Post": {
+            "type": "object",
+            "required": ["image", "content"],
+            "properties": {
+                "image": {
+                    "type": "string",
+                    "description": "Post image",
+                    "example": "https://pin.it/4SWOUSX"
+                },
+                "content": {
+                    "type":"string",
+                    "description": "Post content",
+                    "example": "Brabus G-Wagon G900"
                 }
             }
         }

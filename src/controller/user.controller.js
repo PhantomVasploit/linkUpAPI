@@ -64,6 +64,17 @@ module.exports.updateUser = async(req, res)=>{
         if(checkUserQuery.recordset.length <= 0){
             return res.status(404).json({error: 'User account not found'})
         }
+
+        // include this additional logic to the unit tests
+
+        const checkUserEmailQuery = await pool
+        .request()
+        .input('email', email)
+        .execute('findUserByEmailProc')
+
+        if(checkUserEmailQuery.recordset.length >= 1){
+            return res.status(409).json({error: 'Email is already registered'})
+        }
         
         await pool
         .request()
@@ -77,7 +88,6 @@ module.exports.updateUser = async(req, res)=>{
         return res.status(200).json({message: 'Update successful'})
 
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({error: 'Internal server error'})
     }
 }
