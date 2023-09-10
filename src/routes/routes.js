@@ -1,7 +1,9 @@
 const { Router } = require('express')
-const { register, login, verifyUserRegistration, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../controller/auth.controller')
+
 const { fetchUserById, updateUser, deleteUser, fetchAllUsers } = require('../controller/user.controller')
-const { createNewPost, getAllPosts, getPostById, getUserPosts, updatePost, deletePost, fetchAllPostAndTheirAuthors } = require('../controller/post.controller')
+const { createNewPost, getPostById, getUserPosts, updatePost, deletePost, fetchAllPostAndTheirAuthors } = require('../controller/post.controller')
+const { register, login, verifyUserRegistration, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../controller/auth.controller')
+const { createNewComment, fetchPostComments } = require('../controller/comments.controller')
 
 
 const router = Router()
@@ -15,17 +17,19 @@ router.post('/verify-user', verifyUserRegistration)
 router.post('/deactivate-account', deactivateAccount)
 router.post('/validate-reset-password-token', validateResetPasswordToken)
 
-router.get("/users", fetchAllUsers)
 router.put("/user/:id", updateUser)
-router.delete("/user/:id", deleteUser)
+router.get("/users", fetchAllUsers)
 router.get("/user/:id", fetchUserById)
+router.delete("/user/:id", deleteUser)
 
-// router.get('/posts', getAllPosts)
 router.get('/post/:id', getPostById)
 router.delete('/post/:id', deletePost)
 router.post('/post/:id', createNewPost)
 router.get('/user/post/:id', getUserPosts)
 router.put('/post/:userId/:id', updatePost)
 router.get('/posts', fetchAllPostAndTheirAuthors)
+
+router.get('/comments/:postId', fetchPostComments)
+router.post('/comment/:postId/:userId', createNewComment)
 
 module.exports = router

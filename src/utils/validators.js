@@ -137,3 +137,20 @@ module.exports.postSchema = Joi.object({
     })
 
 })
+
+
+module.exports.commentSchema = Joi.object({
+    
+    content: Joi.string()
+    .min(3)
+    .max(500)
+    .required()
+    .messages({
+        'string.base': `post content should be of type: 'text'`,
+        'string.empty': `post content should not be empty`,
+        'string.min': `post content should have at least 3 characters`,
+        'String.max': `post content should contain at most 500 charcters`,
+        'any.required': `post content is a required name`,
+    })
+    
+})

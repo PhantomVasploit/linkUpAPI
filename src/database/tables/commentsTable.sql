@@ -11,7 +11,7 @@ CREATE TABLE commentTable(
     content VARCHAR(500) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_at DATETIME,
-    is_deleted BIT DEFAULT 0
+    is_deleted BIT DEFAULT 0 NOT NULL
     FOREIGN KEY (user_id) REFERENCES userTable(id),
     FOREIGN KEY (post_id )REFERENCES postTable(id)
 )
