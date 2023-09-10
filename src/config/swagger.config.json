@@ -434,6 +434,33 @@
             }
         },
 
+        "/user/post/{id}":{
+            "get":{
+                "tags": ["Post Management"],
+                "summary": "Fetch specific user posts",
+                "description": "It will return a list of post created by the user whose id is in the request parameter",
+                "operationId":"fetchUserPosts",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "User id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
         "/posts": {
             "get": {
                 "tags": ["Post Management"],
@@ -549,8 +576,59 @@
                     }
                 }
             }
-        }
+        },
 
+        "/post/{userId}/{id}": {
+            "put": {
+                "tags": ["Post Management"],
+                "summary": "Update user post",
+                "description": "It will update the user's post whose id and post id is specified in the request parameters",
+                "operationId": "updateUserPost",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "userId",
+                        "description": "User's id",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "Post id",
+                        "required": true
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Post details",
+                        "required": true,
+                        "schema": {"$ref": "#/definitions/Post"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update successful"
+                    },
+                    "400": {
+                        "description": "Request body is empty"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    },
+                    "409": {
+                        "description": "Post does not belong to the user or post is deleted"
+                    },
+                    "422": {
+                        "description": "User input validation failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        }
     },
     "definitions": {
 

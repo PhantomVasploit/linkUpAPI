@@ -67,14 +67,14 @@ module.exports.updateUser = async(req, res)=>{
 
         // include this additional logic to the unit tests
 
-        const checkUserEmailQuery = await pool
-        .request()
-        .input('email', email)
-        .execute('findUserByEmailProc')
+        // const checkUserEmailQuery = await pool
+        // .request()
+        // .input('email', email)
+        // .execute('findUserByEmailProc')
 
-        if(checkUserEmailQuery.recordset.length >= 1){
-            return res.status(409).json({error: 'Email is already registered'})
-        }
+        // if(checkUserEmailQuery.recordset.length >= 1){
+        //     return res.status(409).json({error: 'Email is already registered'})
+        // }
         
         await pool
         .request()

@@ -34,20 +34,6 @@ module.exports.createNewPost = async(req, res)=>{
     }
 }
 
-module.exports.getAllPosts = async(req, res)=>{
-    try {
-        
-        const pool = await mssql.connect(sqlConfig)
-        const posts = await pool
-        .request()
-        .execute('getAllPostsProc')
-
-        return res.status(200).json({message: 'Fetch successful', posts: posts.recordset})
-
-    } catch (error) {
-        return res.status(500).json({error: 'Internal server error'})
-    }
-}
 
 module.exports.getPostById = async(req, res)=>{
     try {
@@ -84,6 +70,20 @@ module.exports.getUserPosts = async(req, res)=>{
         return res.status(500).json({error: 'Internal server error'})
     }
 
+}
+
+module.exports.fetchAllPostAndTheirAuthors = async(req, res)=>{
+    try {
+        
+        const pool = await mssql.connect(sqlConfig)
+        const posts = await pool
+        .request()
+        .execute('fetchAllPostsAndTheirAuthorsProc')
+
+        return res.status(200).json({message: 'Fetch successful', posts: posts.recordset})
+    } catch (error) {
+        return res.status(500).json({error: 'Internal server error'})
+    }
 }
 
 
@@ -130,7 +130,6 @@ module.exports.updatePost = async(req, res)=>{
         return res.status(200).json({message: 'Post updated successfully'})
 
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({error: 'Internal server error'})
     }
 }
@@ -160,7 +159,6 @@ module.exports.deletePost = async(req, res)=>{
 
         return res.status(200).json({message: 'Post deleted successfully'})
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({error: 'Internal server error'})
     }
 }

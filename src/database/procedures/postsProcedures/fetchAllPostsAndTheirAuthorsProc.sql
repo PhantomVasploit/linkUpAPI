@@ -1,9 +1,10 @@
 USE LinkUpDatabase;
 GO
 
-CREATE OR ALTER PROCEDURE getPostByIdProc(@id INT)
+CREATE OR ALTER PROCEDURE fetchAllPostsAndTheirAuthorsProc
 AS
 BEGIN
+
     SELECT 
         p.id AS post_id,
         p.content AS post_content,
@@ -26,10 +27,10 @@ BEGIN
         postLikesTable AS pl ON p.id = pl.post_id
     WHERE 
         p.is_deleted = 0
-        AND
-        p.id = @id
     GROUP BY 
         p.id, p.content, p.image, p.created_at, u.id, u.first_name, u.last_name, u.email, u.avatar
     ORDER BY 
         p.created_at DESC;
+
+
 END
