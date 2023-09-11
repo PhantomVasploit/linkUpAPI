@@ -1,9 +1,10 @@
 const { Router } = require('express')
 
+const { likePost, unlikePost, fetchPostsLikedByUser } = require('../controller/post.likes.controller')
 const { fetchUserById, updateUser, deleteUser, fetchAllUsers } = require('../controller/user.controller')
+const { createNewComment, fetchPostComments, updateComment, deleteComment } = require('../controller/comments.controller')
 const { createNewPost, getPostById, getUserPosts, updatePost, deletePost, fetchAllPostAndTheirAuthors } = require('../controller/post.controller')
 const { register, login, verifyUserRegistration, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../controller/auth.controller')
-const { createNewComment, fetchPostComments, updateComment, deleteComment } = require('../controller/comments.controller')
 
 
 const router = Router()
@@ -33,5 +34,9 @@ router.get('/comments/:postId', fetchPostComments)
 router.put('/comment/:userId/:commentId', updateComment)
 router.post('/comment/:postId/:userId', createNewComment)
 router.delete('/comment/:userId/:commnetId', deleteComment)
+
+router.post('/post/like/:userId/:postId', likePost)
+router.delete('/post/like/:userId/:postId', unlikePost)
+router.get('/post/like/:userId', fetchPostsLikedByUser)
 
 module.exports = router
