@@ -628,6 +628,78 @@
                     }
                 }
             }
+        },
+
+        "/comments/${postId}": {
+            "get": {
+                "tags": ["Comment Managemnt"],
+                "summary": "Fetch post comments",
+                "description": "It will return an array of all comments of a particular post",
+                "operationId": "fetchPostComments",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "postId",
+                        "description": "Post Id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetch successful"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+
+        "/comment/${userId}/${commentId}": {
+            "put": {
+                "tags": ["Comment Managemnt"],
+                "summary": "Update comment",
+                "description": "it will update an existing post comment",
+                "operationId": "updatePostComment",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "userId",
+                        "description": "User's id",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "commentId",
+                        "description": "Comment id",
+                        "required": true   
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update successful"
+                    },
+                    "400": {
+                        "description": "Request body is empty"
+                    },
+                    "404": {
+                      "description": "Comment not found"  
+                    },
+                    "409": {
+                        "description": "Comment is deleted"
+                    },
+                    "422": {
+                        "description": "User input validation failed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
     },
     "definitions": {

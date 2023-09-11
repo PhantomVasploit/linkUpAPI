@@ -1,106 +1,14 @@
 const mssql = require('mssql')
-const { likePost, unlikePost, fetchPostsLikedByUser } = require('../../src/controller/post.likes.controller')
+const { followUser, unfollowUser, fetchUserFollowing } = require('../../src/controller/userRelationship.controller')
 
-describe('Like Post Test Suites', ()=>{
-
-    it('should return a status code of 500 if an error occurs during request execution', async()=>{
-
-        const request = {
-            params: {
-                userId: 1,
-                postId: 3
-            }
-        }
-
-        const response = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        }
-
-        const mockPool = {
-            request: jest.fn(()=>{
-                throw new Error("Could not connect to the database server")
-            })
-        }
-
-        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
-        await likePost(request, response)
-        expect(response.status).toHaveBeenCalledWith(500)
-        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
-
-    })
-
-    it('should return a status of 409 when user has already liked the post', async()=>{
-
-        const request = {
-            params: {
-                userId: 1,
-                postId: 3
-            }
-        }
-
-        const response = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        }
-
-        const mockRecordSet = [
-            {
-                "id": 1,
-                "user_id": 1,
-                "post_id": 3
-            }
-        ]
-
-        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
-            request: jest.fn().mockReturnThis(),
-            input: jest.fn().mockReturnThis(),
-            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
-        })
-
-        await likePost(request, response)
-        expect(response.status).toHaveBeenCalledWith(409)
-        expect(response.json).toHaveBeenCalledWith({error: 'User already liked the post'})
-    })
-
-    it('should return a status code of 200 when post is liked successfully', async()=>{
-
-        const request = {
-            params: {
-                userId: 1,
-                postId: 3
-            }
-        }
-
-        const response = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        }
-
-        const mockRecordSet = []
-
-        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
-            request: jest.fn().mockReturnThis(),
-            input: jest.fn().mockReturnThis(),
-            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
-        })
-
-        await likePost(request, response) 
-        expect(response.status).toHaveBeenCalledWith(201)
-        expect(response.json).toHaveBeenCalledWith({message: 'Post liked'})
-    })
-
-})
-
-
-describe('Ulike Post Test Suites', ()=>{
+describe('Follow User Test Suites', ()=>{
 
     it('should return a status code of 500 when an error occurs during request execution', async()=>{
 
         const request = {
             params: {
-                userId: 1,
-                postId: 3
+                followerId: 1,
+                followingId: 2
             }
         }
 
@@ -111,22 +19,114 @@ describe('Ulike Post Test Suites', ()=>{
 
         const mockPool = {
             request: jest.fn(()=>{
-                throw new Error('Could not connect to database server')
+                throw new Error('Could not connect to the database server')
             })
         }
 
         jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
-        await unlikePost(request, response)
+        await followUser(request, response)
         expect(response.status).toHaveBeenCalledWith(500)
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
     })
 
-    it('should return a status code of 409 when user tries to unlike a post they have not liked', async()=>{
+    it('should return a status code of 409 if user already follows the user', async()=>{
+
+        const mockRecordSet = [
+            {
+                "following_id": 2,
+                "following_first_name": "Paul",
+                "following_last_name": "Sanga"
+            }
+        ]
 
         const request = {
             params: {
-                userId: 1,
-                postId: 3
+                followerId: 1,
+                followingId: 2
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await followUser(request, response)
+        expect(response.status).toHaveBeenCalledWith(409)
+        expect(response.json).toHaveBeenCalledWith({error: 'User already follows this user'})
+    })
+
+    it('should return a status code of 200 if user successfully follows the user', async()=>{
+        
+        const mockRecordSet = []
+
+        const request = {
+            params: {
+                followerId: 1,
+                followingId: 2
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce({
+            request: jest.fn().mockReturnThis(),
+            input: jest.fn().mockReturnThis(),
+            execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
+        })
+
+        await followUser(request, response)
+        expect(response.status).toHaveBeenCalledWith(201)
+        expect(response.json).toHaveBeenCalledWith({message: 'User following added'})
+    })
+
+})
+
+
+describe('Unfollow User Test Suites', ()=>{
+
+    it('should return a status code of 500 if an error occurs during request execution', async()=>{
+
+        const request = {
+            params: {
+                followerId: 1,
+                followingId: 2
+            }
+        }
+
+        const response = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const mockPool = {
+            request: jest.fn(()=>{
+                throw new Error('Error connecting to the database')
+            })
+        }
+
+        jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
+        await unfollowUser(request, response)
+        expect(response.status).toHaveBeenCalledWith(500)
+        expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+
+    })
+
+    it('should return a status code of 409 if the relationship between the users does not exist', async()=>{
+
+        const request = {
+            params: {
+                followerId: 1,
+                followingId: 2
             }
         }
 
@@ -143,18 +143,18 @@ describe('Ulike Post Test Suites', ()=>{
             execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
         })
 
-        await unlikePost(request, response)
+        await unfollowUser(request, response)
         expect(response.status).toHaveBeenCalledWith(409)
-        expect(response.json).toHaveBeenCalledWith({error: 'You can not unlike a post you did not like'})
+        expect(response.json).toHaveBeenCalledWith({error: 'Can not unfollow a user you do not follow'})
 
     })
 
-    it('shoud return a status code of 200 if post is successfully unliked', async()=>{
-
+    it('should return a status code of 200 if user suceesfully unfollows user', async()=>{
+  
         const request = {
             params: {
-                userId: 1,
-                postId: 3
+                followerId: 1,
+                followingId: 2
             }
         }
 
@@ -165,9 +165,9 @@ describe('Ulike Post Test Suites', ()=>{
 
         const mockRecordSet = [
             {
-                "id": 1,
-                "user_id": 1,
-                "post_id": 3
+                "following_id": 2,
+                "following_first_name": "Paul",
+                "following_last_name": "Sanga"
             }
         ]
 
@@ -177,21 +177,21 @@ describe('Ulike Post Test Suites', ()=>{
             execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
         })
 
-        await unlikePost(request, response)
+        await unfollowUser(request, response)
         expect(response.status).toHaveBeenCalledWith(200)
-        expect(response.json).toHaveBeenCalledWith({message: 'Post unliked'})
+        expect(response.json).toHaveBeenCalledWith({message: 'Unfollow successfull'})
+        
     })
 
 })
 
+describe('Fetch User Following', ()=>{
 
-describe('Fetch Posts Liked By User Test Suites', ()=>{
-
-    it('should return a status code of 500 if an error occurs during request execution', async()=>{
+    it('should return a status code of 500 when an error occurs during request execution', async()=>{
 
         const request = {
             params: {
-                userId: 1
+                followerId: 1
             }
         }
 
@@ -199,23 +199,25 @@ describe('Fetch Posts Liked By User Test Suites', ()=>{
             status: jest.fn().mockReturnThis(),
             json: jest.fn()
         }
-
+        
         const mockPool = {
             request: jest.fn(()=>{
-                throw new Error("Could not connect to the database server")
+                throw new Error('Error connecting to the database server')
             })
         }
+
         jest.spyOn(mssql, 'connect').mockResolvedValueOnce(mockPool)
-        await fetchPostsLikedByUser(request, response)
+        await fetchUserFollowing(request, response)
         expect(response.status).toHaveBeenCalledWith(500)
         expect(response.json).toHaveBeenCalledWith({error: 'Internal server error'})
+
     })
 
-    it('should return a status code of 200 when posts are fetched successfully', async()=>{
-        
+    it('should return a status code of 200 if user followings are retrieved sucessfully', async()=>{
+
         const request = {
             params: {
-                userId: 1
+                followerId: 1
             }
         }
 
@@ -226,13 +228,9 @@ describe('Fetch Posts Liked By User Test Suites', ()=>{
 
         const mockRecordSet = [
             {
-                "id": 3,
-                "user_id": 1,
-                "image": "https://pin.it/4SWOUSX",
-                "content": "Brabus G-Wagon",
-                "created_at": "2023-09-09T18:43:03.560Z",
-                "update_at": "2023-09-09T23:48:30.100Z",
-                "is_deleted": false
+                "following_id": 2,
+                "following_first_name": "Paul",
+                "following_last_name": "Sanga"
             }
         ]
 
@@ -242,12 +240,13 @@ describe('Fetch Posts Liked By User Test Suites', ()=>{
             execute: jest.fn().mockResolvedValueOnce({recordset: mockRecordSet})
         })
 
-        await fetchPostsLikedByUser(request, response)
+        await fetchUserFollowing(request, response)
         expect(response.status).toHaveBeenCalledWith(200)
         expect(response.json).toHaveBeenCalledWith({
-            message: 'Fetch successful',
-            posts: mockRecordSet
+            message: 'Fetch successful', 
+            following: mockRecordSet
         })
+        
     })
 
 })

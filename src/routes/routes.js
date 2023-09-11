@@ -5,6 +5,7 @@ const { fetchUserById, updateUser, deleteUser, fetchAllUsers } = require('../con
 const { createNewComment, fetchPostComments, updateComment, deleteComment } = require('../controller/comments.controller')
 const { createNewPost, getPostById, getUserPosts, updatePost, deletePost, fetchAllPostAndTheirAuthors } = require('../controller/post.controller')
 const { register, login, verifyUserRegistration, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../controller/auth.controller')
+const { followUser, unfollowUser, fetchUserFollowing } = require('../controller/userRelationship.controller')
 
 
 const router = Router()
@@ -38,5 +39,9 @@ router.delete('/comment/:userId/:commnetId', deleteComment)
 router.post('/post/like/:userId/:postId', likePost)
 router.delete('/post/like/:userId/:postId', unlikePost)
 router.get('/post/like/:userId', fetchPostsLikedByUser)
+
+router.get('/user/followings/:followerId', fetchUserFollowing)
+router.post('/user/follow/:followerId/:followingId', followUser)
+router.delete('/user/unfollow/:followerId/:followingId', unfollowUser)
 
 module.exports = router
