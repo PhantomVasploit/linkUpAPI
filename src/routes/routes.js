@@ -34,7 +34,7 @@ router.get('/posts', fetchAllPostAndTheirAuthors)
 router.get('/comments/:postId', fetchPostComments)
 router.put('/comment/:userId/:commentId', updateComment)
 router.post('/comment/:postId/:userId', createNewComment)
-router.delete('/comment/:userId/:commnetId', deleteComment)
+router.delete('/comment/:userId/:commentId', deleteComment)
 
 router.post('/post/like/:userId/:postId', likePost)
 router.delete('/post/like/:userId/:postId', unlikePost)
