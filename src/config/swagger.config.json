@@ -1010,7 +1010,7 @@
                 "profilePicture": {
                     "type": "string",
                     "description": "User's profile picture",
-                    "example": "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwallpapercg.com%2Fdownload%2Fyuji-itadori-3840x2743-9543.jpg&tbnid=u9FKufbPMLQ2EM&vet=12ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg..i&imgrefurl=https%3A%2F%2Fwallpapercg.com%2Fyuji-itadori-wallpapers&docid=sk23cipVVPF6mM&w=3840&h=2743&q=itadori&ved=2ahUKEwibov3YmZOBAxXQkicCHat8CkAQMyhLegUIARClAg"
+                    "example": "https://pin.it/4eQdoxn"
                 }
             } 
         },
