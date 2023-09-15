@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer')
 
 const { register, verifyUserRegistration, login, forgotPassword, validateResetPasswordToken, setNewPassword, deactivateAccount, activateAccount } = require('../../src/controller/auth.controller')
 const { registrationSchema, overWriteOTP, loginSchema, forgotPasswordSchema, validateResetPasswordTokenSchema } = require('../../src/utils/validators')
-const { request } = require('express')
+
 
 
 describe('User registration test suites', ()=>{
