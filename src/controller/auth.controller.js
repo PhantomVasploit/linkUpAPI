@@ -237,8 +237,6 @@ module.exports.validateResetPasswordToken = async(req, res)=>{
         .input('email', email)
         .execute('findUserByEmailProc')
 
-        console.log(checkEmailQuery.recordset);
-
         if(checkEmailQuery.recordset.length <= 0){
             return res.status(409).json({error: 'This email is unregistered'})
         }
