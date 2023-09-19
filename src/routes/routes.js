@@ -30,7 +30,7 @@ router.delete('/post/:id', authorization, deletePost)
 router.post('/post/:id', authorization, createNewPost)
 router.get('/user/post/:id', authorization, getUserPosts)
 router.put('/post/:userId/:id', authorization, updatePost)
-router.get('/posts', authorization, fetchAllPostAndTheirAuthors)
+router.get('/posts',  fetchAllPostAndTheirAuthors)
 
 router.get('/comments/:postId', authorization, fetchPostComments)
 router.put('/comment/:userId/:commentId', authorization, updateComment)
@@ -41,8 +41,8 @@ router.post('/post/like/:userId/:postId', authorization, likePost)
 router.delete('/post/like/:userId/:postId', authorization, unlikePost)
 router.get('/post/like/:userId', authorization, fetchPostsLikedByUser)
 
-router.get('/user/followings/:followerId', authorization, fetchUserFollowing)
-router.post('/user/follow/:followerId/:followingId', authorization, followUser)
-router.delete('/user/unfollow/:followerId/:followingId', authorization, unfollowUser)
+router.get('/user/followings/:followerId',  fetchUserFollowing)
+router.post('/user/follow/:followerId/:followingId', followUser)
+router.delete('/user/unfollow/:followerId/:followingId',  unfollowUser)
 
 module.exports = router

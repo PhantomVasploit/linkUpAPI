@@ -13,9 +13,11 @@ module.exports.authorization = (req, res, next)=>{
             }else{
                 return jwt.verify(token, process.env.SECRET_KEY, (error, decodedToken)=>{
                     if(error){
+                        
                         return res.status(401).json({error: error.message})
                     }
                     if(decodedToken){
+                        
                         next()
                     }
                 })
